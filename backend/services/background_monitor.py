@@ -1,5 +1,11 @@
 import psutil
-import win32gui
+import platform
+
+# Windows-only support
+if platform.system() == "Windows":
+    import win32gui
+else:
+    win32gui = None
 
 # Store previous state
 previous_windows = set()
@@ -22,7 +28,11 @@ def get_running_processes():
 
 
 def get_window_titles():
-    """Get visible window titles."""
+    """Get visible window titles (Windows only)."""
+
+    if win32gui is None:
+        return set()
+
     titles = set()
 
     def callback(hwnd, _):
@@ -30,17 +40,19 @@ def get_window_titles():
             if win32gui.IsWindowVisible(hwnd):
                 title = win32gui.GetWindowText(hwnd).strip()
 
-                # Ignore empty/system windows
                 if title and title not in (
                     "Program Manager",
-                    "Windows Input Experience"
+                    "Windows Input Experience",
                 ):
                     titles.add(title)
 
         except Exception:
             pass
 
-    win32gui.EnumWindows(callback, None)
+    try:
+        win32gui.EnumWindows(callback, None)
+    except Exception:
+        pass
 
     return titles
 
@@ -50,7 +62,12 @@ def analyze_background_apps():
     global previous_processes
 
     current_processes = get_running_processes()
-    current_windows = get_window_titles()
+
+    # Windows only
+    if platform.system() == "Windows":
+        current_windows = get_window_titles()
+    else:
+        current_windows = set()
 
     changes = []
 
@@ -59,19 +76,6 @@ def analyze_background_apps():
 
     new_windows = current_windows - previous_windows
     closed_windows = previous_windows - current_windows
-
-    # DEBUG
-    if new_processes:
-        print("New Processes:", new_processes)
-
-    if closed_processes:
-        print("Closed Processes:", closed_processes)
-
-    if new_windows:
-        print("New Windows:", new_windows)
-
-    if closed_windows:
-        print("Closed Windows:", closed_windows)
 
     if new_processes:
         changes.append({
@@ -101,6 +105,7 @@ def analyze_background_apps():
     previous_windows = current_windows
 
     return {
+        "platform": platform.system(),
         "running_apps_count": len(current_processes),
         "open_windows_count": len(current_windows),
         "changes": changes
