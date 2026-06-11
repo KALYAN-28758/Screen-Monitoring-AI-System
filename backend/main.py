@@ -42,12 +42,12 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        settings.FRONTEND_URL,
+        "https://screen-monitoring-ai-system.vercel.app",
         "http://localhost:3000",
         "http://localhost:5173",
         "http://localhost:5174",
-        "http://127.0.0.1:3000",
         "http://localhost:5175",
+        "http://127.0.0.1:3000",
         "http://127.0.0.1:5174",
     ],
     allow_credentials=True,
