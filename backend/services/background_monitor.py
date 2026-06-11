@@ -2,7 +2,9 @@ import psutil
 import platform
 
 # Windows-only support
-if platform.system() == "Windows":
+WINDOWS_MODE = platform.system() == "Windows"
+
+if WINDOWS_MODE:
     import win32gui
 else:
     win32gui = None
@@ -30,7 +32,7 @@ def get_running_processes():
 def get_window_titles():
     """Get visible window titles (Windows only)."""
 
-    if win32gui is None:
+    if not WINDOWS_MODE or win32gui is None:
         return set()
 
     titles = set()
@@ -63,11 +65,8 @@ def analyze_background_apps():
 
     current_processes = get_running_processes()
 
-    # Windows only
-    if platform.system() == "Windows":
-        current_windows = get_window_titles()
-    else:
-        current_windows = set()
+    # Window tracking only works on Windows
+    current_windows = get_window_titles() if WINDOWS_MODE else set()
 
     changes = []
 
